@@ -26,15 +26,39 @@ colSums(is.na(bank))
 corrplot(cor(bank, use = "complete.obs"), method = "number")
 
 #histograms
+#EPS
 eps <- ggplot(bank, aes(x=EPS)) + 
   geom_histogram()+
   xlim(-15,15)
 eps
 
+#Liquidity
 Liq <- ggplot(bank, aes(x=Liquidity)) + 
   geom_histogram()+
   xlim(-2,2)
 Liq
+
+#productivity
+prod <- ggplot(bank, aes(x=Productivity)) + 
+  geom_histogram()+
+  xlim(-2,2)
+prod
+
+#Leverage Ratio
+lr <- ggplot(bank, aes(x=bank$`Leverage Ratio`)) + 
+  geom_histogram()+
+  xlim(-2,2)
+lr
+
+at <- ggplot(bank, aes(x=bank$`Asset Turnover`)) + 
+  geom_histogram()+
+  xlim(-2,2)
+at
+
+prod <- ggplot(bank, aes(x=Productivity)) + 
+  geom_histogram()+
+  xlim(-2,2)
+prod
 
 prod <- ggplot(bank, aes(x=Productivity)) + 
   geom_histogram()+
