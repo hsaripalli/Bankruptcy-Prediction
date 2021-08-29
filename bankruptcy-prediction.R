@@ -50,17 +50,23 @@ lr <- ggplot(bank, aes(x=bank$`Leverage Ratio`)) +
   xlim(-2,2)
 lr
 
+#Asset Turnover
 at <- ggplot(bank, aes(x=bank$`Asset Turnover`)) + 
   geom_histogram()+
   xlim(-2,2)
 at
 
-prod <- ggplot(bank, aes(x=Productivity)) + 
+#Operational Margin
+om <- ggplot(bank, aes(x=bank$`Operational Margin`)) + 
   geom_histogram()+
   xlim(-2,2)
-prod
+om
 
-prod <- ggplot(bank, aes(x=Productivity)) + 
-  geom_histogram()+
-  xlim(-2,2)
-prod
+#for loop for histograms (doesn't work) 
+
+for (i in 1:12){
+  plot_i <- ggplot(bank, aes(x=bank[,i]))+
+    geom_histogram()
+  plot_i
+}
+
