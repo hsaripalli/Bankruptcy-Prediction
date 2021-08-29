@@ -10,3 +10,7 @@ str(bank)
 summary(bank)
 head(bank)
 
+#check the skewness of data
+bank %>%
+  count(BK) %>%
+  mutate(percent = n/sum(n)*100)
