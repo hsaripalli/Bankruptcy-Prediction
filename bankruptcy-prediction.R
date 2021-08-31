@@ -4,6 +4,7 @@ library(caret)
 library(ggplot2)
 library(corrplot)
 library(ggpubr)
+library(mice)
 
 theme_set(theme_bw())
 
@@ -120,4 +121,63 @@ for (i in 1:12){
   plot_i
 }
 
+
+#*******************************************************
+# Delete missing row code section
+# 
+# Comment this section out if you do not want to do this
+#*******************************************************
+
+
+# Split data between test and train sets (this is where the Excel files seems to split the test/train observations)
+trainBank<-bank[1:88630,]
+testBank<-bank[88631:92872,]
+
+# Delete all rows with missing values in training set
+trainBank <-filter(trainBank, !is.na(trainBank$eps))
+trainBank <-filter(trainBank, !is.na(trainBank$liquidity))
+trainBank <-filter(trainBank, !is.na(trainBank$profitability))
+trainBank <-filter(trainBank, !is.na(trainBank$productivity))
+trainBank <-filter(trainBank, !is.na(trainBank$leverage_ratio))
+trainBank <-filter(trainBank, !is.na(trainBank$asset_turnover))
+trainBank <-filter(trainBank, !is.na(trainBank$operational_margin))
+trainBank <-filter(trainBank, !is.na(trainBank$return_on_equity))
+trainBank <-filter(trainBank, !is.na(trainBank$assets_growth))
+trainBank <-filter(trainBank, !is.na(trainBank$sales_growth))
+trainBank <-filter(trainBank, !is.na(trainBank$market_book_ratio))
+trainBank <-filter(trainBank, !is.na(trainBank$employee_growth))
+
+
+# Delete all rows with missing values in testing set
+testBank <-filter(testBank, !is.na(testBank$eps))
+testBank <-filter(testBank, !is.na(testBank$liquidity))
+testBank <-filter(testBank, !is.na(testBank$profitability))
+testBank <-filter(testBank, !is.na(testBank$productivity))
+testBank <-filter(testBank, !is.na(testBank$leverage_ratio))
+testBank <-filter(testBank, !is.na(testBank$asset_turnover))
+testBank <-filter(testBank, !is.na(testBank$operational_margin))
+testBank <-filter(testBank, !is.na(testBank$return_on_equity))
+testBank <-filter(testBank, !is.na(testBank$assets_growth))
+testBank <-filter(testBank, !is.na(testBank$sales_growth))
+testBank <-filter(testBank, !is.na(testBank$market_book_ratio))
+testBank <-filter(testBank, !is.na(testBank$employee_growth))
+
+# This cleans the entire original data set (not split)
+cleanedBank <-filter(bank, !is.na(bank$eps))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$liquidity))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$profitability))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$productivity))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$leverage_ratio))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$asset_turnover))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$operational_margin))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$return_on_equity))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$assets_growth))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$sales_growth))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$market_book_ratio))
+cleanedBank <-filter(cleanedBank, !is.na(cleanedBank$employee_growth))
+
+# Checks for missing data
+md.pattern(cleanedBank)
+md.pattern(trainBank)
+md.pattern(testBank)
 
