@@ -73,13 +73,9 @@ testBank<-arrange(testBank, Obs)
 
 # SMOTE - package not available; waiting for instruction from Prof. Scott 
 
-# Naive Bayes classification 
+########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
 # Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
-
-# install.packages('naivebayes')
-# install.packages('psych')
-# install.packages('e1071')
 
 library(naivebayes)
 library(psych)
