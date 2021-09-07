@@ -69,4 +69,8 @@ testBank<-arrange(testBank, Obs)
 # md.pattern(trainBank)
 # md.pattern(testBank)
 
+# Smote 
+
+# Naive Bayes classification 
+
 
