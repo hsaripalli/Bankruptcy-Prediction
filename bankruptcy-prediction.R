@@ -73,29 +73,32 @@ testBank<-arrange(testBank, Obs)
 
 # Naive Bayes classification 
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
+# Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
 
 # install.packages('naivebayes')
 # install.packages('psych')
+# install.packages('e1071')
 
 library(naivebayes)
 library(psych)
+library(e1071)
 
 bank_nb_train <- trainBank
+bank_nb_test <- testBank
 bank_nb_train$bk <- as.factor(bank_nb_train$bk)
+bank_nb_test$bk <- as.factor(bank_nb_test$bk)
 
-nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = F)
+nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = T, laplace=1)
 plot(nb_model)
 
-nb_model_predict <- predict(nb_model, bank_nb_train, type = 'prob')
+nb_model_predict <- predict(nb_model, bank_nb_train, type = 'class')
 head(cbind(nb_model_predict, bank_nb_train))
+nb_table <- table(nb_model_predict, bank_nb_train$bk, dnn=c("Prediction","Actual"))
+nb_table
+1 - sum(diag(nb_table))/sum(nb_table)
 
-nb_model_predict2 <- predict(nb_model, bank_nb_train)
-(tab1 <- table(nb_model_predict2, bank_nb_train$bk))
-1 - sum(diag(tab1)) / sum(tab1)
+nb_model_predict_test <- predict(nb_model, bank_nb_test)
+nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
+1 - sum(diag(nb_table2)) / sum(nb_table2)
 
-bank_nb_test <- testBank
-
-nb_model_predict3 <- predict(nb_model, bank_nb_test)
-(tab2 <- table(nb_model_predict3, bank_nb_test$bk))
-1 - sum(diag(tab2)) / sum(tab2)
 
