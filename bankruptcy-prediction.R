@@ -1,5 +1,3 @@
-# install.packages('DMwR')
-
 library(dplyr)
 library(readxl)
 library(caret)
@@ -8,7 +6,6 @@ library(corrplot)
 library(ggpubr)
 library(mice)
 library(tidyr)
-# library(DMwR)
 
 theme_set(theme_bw())
 
@@ -72,8 +69,33 @@ testBank<-arrange(testBank, Obs)
 # md.pattern(trainBank)
 # md.pattern(testBank)
 
-# Smote 
+# SMOTE - package not available; waiting for instruction from Prof. Scott 
 
 # Naive Bayes classification 
+# Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
 
+# install.packages('naivebayes')
+# install.packages('psych')
+
+library(naivebayes)
+library(psych)
+
+bank_nb_train <- trainBank
+bank_nb_train$bk <- as.factor(bank_nb_train$bk)
+
+nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = F)
+plot(nb_model)
+
+nb_model_predict <- predict(nb_model, bank_nb_train, type = 'prob')
+head(cbind(nb_model_predict, bank_nb_train))
+
+nb_model_predict2 <- predict(nb_model, bank_nb_train)
+(tab1 <- table(nb_model_predict2, bank_nb_train$bk))
+1 - sum(diag(tab1)) / sum(tab1)
+
+bank_nb_test <- testBank
+
+nb_model_predict3 <- predict(nb_model, bank_nb_test)
+(tab2 <- table(nb_model_predict3, bank_nb_test$bk))
+1 - sum(diag(tab2)) / sum(tab2)
 
