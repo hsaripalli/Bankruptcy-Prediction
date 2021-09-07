@@ -1,3 +1,5 @@
+# install.packages('DMwR')
+
 library(dplyr)
 library(readxl)
 library(caret)
@@ -6,6 +8,7 @@ library(corrplot)
 library(ggpubr)
 library(mice)
 library(tidyr)
+# library(DMwR)
 
 theme_set(theme_bw())
 
