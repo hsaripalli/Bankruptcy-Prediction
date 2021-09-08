@@ -73,6 +73,10 @@ testBank<-arrange(testBank, Obs)
 
 # SMOTE - package not available; waiting for instruction from Prof. Scott 
 
+# install.packages("devtools")
+# require(devtools)
+# install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
 # Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
