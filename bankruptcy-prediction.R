@@ -9,7 +9,6 @@ library(tidyr)
 library(DMwR)
 library(UBL)
 library(car)
-install.packages("outliers")
 library(outliers)
 
 theme_set(theme_bw())
@@ -22,7 +21,6 @@ colnames(bank) <- c("eps", "liquidity", "profitability", "productivity",
                     "leverage_ratio", "asset_turnover", "operational_margin",
                     "return_on_equity", "market_book_ratio", "assets_growth",
                     "sales_growth", "employee_growth", "bk")
-
 
 #examine data
 str(bank)
@@ -131,7 +129,8 @@ nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
 #summary(scaled_bank)
 
 
-
+bank <-drop_na(bank)
+library(neuralnet)
 #Noramizlie data to [-1,1] scale
 
 normalize <- function(x){
@@ -166,21 +165,20 @@ plot(nn)
 predict_nn <- compute(nn, test)
 predict_nn$net.result
 
-predict_nn_class <- ifelse(predict_nn$net.result>0.5301, 1, 0)
+predict_nn_class <- ifelse(predict_nn$net.result>0.52586, 1, 0)
 predict_nn_class
 
 t <- table(predict_nn_class, test$bk)
 confusionMatrix(t)
 
+########################### Logistic Regression ####################################
 
+log <- glm(bk ~., data = balanced_data, family = binomial)
+summary(log)
 
-#Logistic Regression Model model
+predict_glm <- predict(log, test, type = "response")
+predict_glm
 
-model <- glm(bk ~., data = balanced_data, family = binomial)
-summary(model)
-
-predict_glm <- predict(model, test, type = "response")
-
-predict_glm_class <- as.factor(ifelse(predict_glm > 0.4, 1,0))
+predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
 
