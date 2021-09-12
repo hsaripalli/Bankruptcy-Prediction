@@ -93,6 +93,8 @@ bank_nb_test <- testBank
 bank_nb_train$bk <- as.factor(bank_nb_train$bk)
 bank_nb_test$bk <- as.factor(bank_nb_test$bk)
 
+corrplot(cleanedBank)
+
 nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = T, laplace=1)
 plot(nb_model)
 
