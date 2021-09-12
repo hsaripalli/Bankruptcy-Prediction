@@ -68,7 +68,7 @@ testBank<-anti_join(cleanedBank, trainBank)
 testBank<-arrange(testBank, Obs)
 
 
-# Checks for missing data
+# Checks for missing data 
 # md.pattern(cleanedBank)
 # md.pattern(trainBank)
 # md.pattern(testBank)
@@ -78,6 +78,7 @@ testBank<-arrange(testBank, Obs)
 # install.packages("devtools")
 # require(devtools)
 # install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+# library(DMwR)
 
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
@@ -102,6 +103,7 @@ nb_table
 1 - sum(diag(nb_table))/sum(nb_table)
 
 nb_model_predict_test <- predict(nb_model, bank_nb_test)
+head(cbind(nb_model_predict_test, bank_nb_test))
 nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
 1 - sum(diag(nb_table2)) / sum(nb_table2)
 
