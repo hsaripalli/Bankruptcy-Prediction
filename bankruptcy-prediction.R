@@ -186,3 +186,43 @@ predict_glm
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
 
+
+########################### Trees ####################################
+library(Rcpp)
+library(rpart)
+library(rpart.plot)
+
+# This cleans the entire original data set (not split)
+cleanedBank <-drop_na(bank)
+colSums(is.na(cleanedBank))  
+
+
+# Add an index just for programming purposes (will have to be ignored for data science)
+Obs <- 1:81204
+cleanedBank$Obs <-Obs
+
+#convert bk to factor
+#cleanedBank$bk <- as.factor(cleanedBank$bk)
+#str(cleanedBank)
+
+#one-hot encoding for all categorical variables
+dummy <- dummyVars("~.", cleanedBank)
+cleanedBank <- data.frame(predict(dummy, cleanedBank))
+
+# Set seed so it can be repeated
+set.seed(3141)
+
+# Randomly sample 70% percent of the cleaned data set then arrange in order
+trainBank <-sample_n(cleanedBank, floor(0.7*81204))
+trainBank <-arrange(trainBank, Obs)
+str(trainBank)
+
+# The remaining data is used for the test set then arranged in order
+testBank<-anti_join(cleanedBank, trainBank)
+testBank<-arrange(testBank, Obs)
+
+#Classification tree using all predictors
+tree_Bank <- rpart(formula = bk~., data=trainBank, method = "class", minbucket = 50, maxdepth = 7)
+rpart.plot(tree_Bank)
+plotcp(tree_Bank)
+printcp(tree_Bank)
