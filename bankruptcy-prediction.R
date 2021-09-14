@@ -97,15 +97,6 @@ trainBank_SMOTE %>%
   count(bk) %>%
   mutate(percent = n/sum(n)*100)
 
-testBank$bk <- as.factor(testBank$bk)
-smote_test_dataset <- as.data.frame(testBank)
-testBank_SMOTE <- SMOTE(form = bk ~ ., data = smote_test_dataset, perc.over = 10, 
-                        perc.under = 1000, k=5)
-table(testBank_SMOTE$bk)
-
-testBank_SMOTE %>%
-  count(bk) %>%
-  mutate(percent = n/sum(n)*100)
 
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
@@ -130,13 +121,14 @@ nb_table <- table(nb_model_predict, bank_nb_train$bk, dnn=c("Prediction","Actual
 nb_table
 1 - sum(diag(nb_table))/sum(nb_table)
 
-NB_train <- table(nb_model_predict, bank_nb_train$bk)
-confusionMatrix(NB_test)
-
 nb_model_predict_test <- predict(nb_model, bank_nb_test)
 head(cbind(nb_model_predict_test, bank_nb_test))
-nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
+nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk, dnn=c("Prediction","Actual"))
+nb_table2
 1 - sum(diag(nb_table2)) / sum(nb_table2)
+
+NB_train <- table(nb_model_predict, bank_nb_train$bk)
+confusionMatrix(NB_train)
 
 NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
 confusionMatrix(NB_test)
@@ -216,3 +208,15 @@ predict_glm
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
 
+########## KNN Model ##########
+
+trctrl <- trainControl(method = "cv", number = 10)
+
+knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
+                 trControl=trctrl,
+                 preProcess = c("center", "scale"), 
+                 tuneLength = 10)
+print(knn_fit)
+
+test_pred <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_pred, testBank$bk)
