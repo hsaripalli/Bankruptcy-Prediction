@@ -67,23 +67,45 @@ trainBank <-arrange(trainBank, Obs)
 testBank<-anti_join(cleanedBank, trainBank)
 testBank<-arrange(testBank, Obs)
 
+# check skewness again
+trainBank %>%
+  count(bk) %>%
+  mutate(percent = n/sum(n)*100)
+
+testBank %>%
+  count(bk) %>%
+  mutate(percent = n/sum(n)*100)
 
 # Checks for missing data 
 # md.pattern(cleanedBank)
 # md.pattern(trainBank)
 # md.pattern(testBank)
 
-# SMOTE - package not available; waiting for instruction from Prof. Scott 
+# SMOTE
 
 # install.packages("devtools")
-# require(devtools)
+require(devtools)
 # install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
-# library(DMwR)
+library(DMwR)
 
-# ROSE
+trainBank$bk <- as.factor(trainBank$bk)
+smote_train_dataset <- as.data.frame(trainBank)
+trainBank_SMOTE <-  SMOTE(bk ~., smote_train_dataset, perc.over = 10, perc.under = 1000, k=5)
+table(trainBank_SMOTE$bk)
 
-library(ROSE)
+trainBank_SMOTE %>%
+  count(bk) %>%
+  mutate(percent = n/sum(n)*100)
 
+testBank$bk <- as.factor(testBank$bk)
+smote_test_dataset <- as.data.frame(testBank)
+testBank_SMOTE <- SMOTE(form = bk ~ ., data = smote_test_dataset, perc.over = 10, 
+                        perc.under = 1000, k=5)
+table(testBank_SMOTE$bk)
+
+testBank_SMOTE %>%
+  count(bk) %>%
+  mutate(percent = n/sum(n)*100)
 
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
@@ -93,15 +115,14 @@ library(naivebayes)
 library(psych)
 library(e1071)
 
-bank_nb_train <- trainBank
+bank_nb_train <- trainBank_SMOTE
 bank_nb_test <- testBank
 bank_nb_train$bk <- as.factor(bank_nb_train$bk)
 bank_nb_test$bk <- as.factor(bank_nb_test$bk)
 
-corrplot(cleanedBank)
-
-nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = T, laplace=1)
+nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel=T)
 plot(nb_model)
+print(nb_model)
 
 nb_model_predict <- predict(nb_model, bank_nb_train, type = 'class')
 head(cbind(nb_model_predict, bank_nb_train))
@@ -109,15 +130,19 @@ nb_table <- table(nb_model_predict, bank_nb_train$bk, dnn=c("Prediction","Actual
 nb_table
 1 - sum(diag(nb_table))/sum(nb_table)
 
+NB_train <- table(nb_model_predict, bank_nb_train$bk)
+confusionMatrix(NB_test)
+
 nb_model_predict_test <- predict(nb_model, bank_nb_test)
 head(cbind(nb_model_predict_test, bank_nb_test))
 nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
 1 - sum(diag(nb_table2)) / sum(nb_table2)
 
+NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
+confusionMatrix(NB_test)
+
 
 ########################### Neural Networks ####################################
-
-
 
 #wbank <- winsor(bank, trim = 0.005, na.rm = T)
 #wbank <- as.data.frame(wbank)
