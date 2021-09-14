@@ -253,3 +253,16 @@ tree_Bank <- rpart(formula = bk~., data=trainBank, method = "class", minbucket =
 rpart.plot(tree_Bank)
 plotcp(tree_Bank)
 printcp(tree_Bank)
+
+########## KNN Model ##########
+
+trctrl <- trainControl(method = "cv", number = 10)
+
+knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
+                 trControl=trctrl,
+                 preProcess = c("center", "scale"), 
+                 tuneLength = 10)
+print(knn_fit)
+
+test_pred <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_pred, testBank$bk)
