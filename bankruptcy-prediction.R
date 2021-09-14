@@ -80,6 +80,11 @@ testBank<-arrange(testBank, Obs)
 # install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 # library(DMwR)
 
+# ROSE
+
+library(ROSE)
+
+
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
 # Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
