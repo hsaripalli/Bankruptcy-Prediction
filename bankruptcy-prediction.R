@@ -126,69 +126,6 @@ NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
 confusionMatrix(NB_test)
 
 
-########################### Neural Networks ####################################
-
-#wbank <- winsor(bank, trim = 0.005, na.rm = T)
-#wbank <- as.data.frame(wbank)
-#summary(wbank)
-
-
-#wbank %>%
-#count(bk) %>%
-#mutate(percent = n/sum(n)*100)
-#wbank <- drop_na(wbank)
-#corrplot(cor(wbank, use = "complete.obs"), method = "number")
-#includes missing data
-# test train split 70%
-#scaling data to [0,1] scale
-#max = apply(wbank, 2, max, na.rm = TRUE)
-#min = apply(wbank, 2, min, na.rm = TRUE)
-#scaled_bank = as.data.frame(scale(wbank, center = min, scale = max-min))
-#summary(scaled_bank)
-
-
-bank <-drop_na(bank)
-library(neuralnet)
-#Noramizlie data to [-1,1] scale
-
-normalize <- function(x){
-  return(2*(x-max(x))/(max(x)-min(x))+1)
-}
-
-
-#summary(wbank)
-scaled_bank <- as.data.frame(apply(bank[,-13], 2, function(x) normalize(x)))
-scaled_bank <- cbind(scaled_bank, bk= bank$bk)
-summary(scaled_bank)
-
-
-sample <- sample.int(n=nrow(scaled_bank), size = floor(0.7*nrow(scaled_bank)), replace = F)
-train <- scaled_bank[sample,]
-test <- scaled_bank[-sample,]
-train$bk <- as.factor(train$bk)
-
-balanced_data <- SMOTE(bk ~., train, perc.over = 10, perc.under = 1000, k=5)
-balanced_data$bk <- as.numeric(as.character(balanced_data$bk))
-
-balanced_data %>%
-  count(bk) %>%
-  mutate(percent = n/sum(n)*100)
-
-summary(balanced_data)
-str(balanced_data)
-
-nn = neuralnet(bk ~ ., data = balanced_data, hidden = c(11,6,3), linear.output = FALSE, act.fct = "logistic")
-plot(nn)
-
-predict_nn <- compute(nn, test)
-predict_nn$net.result
-
-predict_nn_class <- ifelse(predict_nn$net.result>0.52586, 1, 0)
-predict_nn_class
-
-t <- table(predict_nn_class, test$bk)
-confusionMatrix(t)
-
 ########################### Logistic Regression ####################################
 
 log <- glm(bk ~., data = balanced_data, family = binomial)
@@ -199,6 +136,7 @@ predict_glm
 
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
+
 
 ########## KNN Model ##########
 
