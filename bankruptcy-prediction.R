@@ -125,6 +125,24 @@ confusionMatrix(NB_train)
 NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
 confusionMatrix(NB_test)
 
+library(ROCR)
+
+#TPR vs FPR Plot and AUC
+nb_model_predict_test <- list(nb_model_predict_test)
+bank_nb_test$bk <- list(bank_nb_test$bk)
+
+nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
+perf_nb <- performance(nb_predict, "tpr", "fpr")
+plot(perf_nb, colorize = TRUE)
+
+auc.tmp <- performance(nn.predict, "auc")
+auc <- as.numeric(auc.tmp@y.values)
+auc
+
+#optimal cut-off using Youden's index
+ROC <- plot.roc(test$bk, predict_nn$net.result)
+coords(ROC, "b", ret = "t", best.method="youden")
+
 
 ########################### Logistic Regression ####################################
 
