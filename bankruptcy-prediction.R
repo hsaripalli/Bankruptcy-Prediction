@@ -209,8 +209,11 @@ predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
+=======
+>>>>>>> fbc08cce1ebff36959d65cac2321b329af8cd76d
 ########## KNN Model ##########
 
 trctrl <- trainControl(method = "cv", number = 10)
