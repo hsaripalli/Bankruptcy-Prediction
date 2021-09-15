@@ -128,6 +128,13 @@ nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
 #scaled_bank = as.data.frame(scale(wbank, center = min, scale = max-min))
 #summary(scaled_bank)
 
+#import data
+bank <- read_excel(file.choose())
+
+colnames(bank) <- c("eps", "liquidity", "profitability", "productivity",
+                    "leverage_ratio", "asset_turnover", "operational_margin",
+                    "return_on_equity", "market_book_ratio", "assets_growth",
+                    "sales_growth", "employee_growth", "bk")
 
 bank <-drop_na(bank)
 library(neuralnet)
@@ -159,13 +166,14 @@ balanced_data %>%
 summary(balanced_data)
 str(balanced_data)
 
-nn = neuralnet(bk ~ ., data = balanced_data, hidden = c(11,6,3), linear.output = FALSE, act.fct = "logistic")
+nn = neuralnet(bk ~ ., data = balanced_data, hidden = 6, linear.output = FALSE, 
+               act.fct = "logistic", stepmax = 1e+6)
 plot(nn)
 
 predict_nn <- compute(nn, test)
 predict_nn$net.result
 
-predict_nn_class <- ifelse(predict_nn$net.result>0.52586, 1, 0)
+predict_nn_class <- ifelse(predict_nn$net.result>0.52667, 1, 0)
 predict_nn_class
 
 t <- table(predict_nn_class, test$bk)
@@ -181,4 +189,5 @@ predict_glm
 
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
+
 
