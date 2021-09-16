@@ -128,14 +128,12 @@ confusionMatrix(NB_test)
 library(ROCR)
 
 #TPR vs FPR Plot and AUC
-nb_model_predict_test <- list(nb_model_predict_test)
-bank_nb_test$bk <- list(bank_nb_test$bk)
 
 nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
 perf_nb <- performance(nb_predict, "tpr", "fpr")
 plot(perf_nb, colorize = TRUE)
 
-auc.tmp <- performance(nn.predict, "auc")
+auc_nb <- performance(nb_model_predict_test, "auc")
 auc <- as.numeric(auc.tmp@y.values)
 auc
 
