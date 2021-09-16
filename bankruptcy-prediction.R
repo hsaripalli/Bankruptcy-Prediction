@@ -73,12 +73,22 @@ testBank<-arrange(testBank, Obs)
 # md.pattern(trainBank)
 # md.pattern(testBank)
 
-# SMOTE - package not available; waiting for instruction from Prof. Scott 
+# SMOTE
 
 # install.packages("devtools")
-# require(devtools)
+require(devtools)
 # install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
-# library(DMwR)
+library(DMwR)
+
+trainBank$bk <- as.factor(trainBank$bk)
+smote_train_dataset <- as.data.frame(trainBank)
+trainBank_SMOTE <-  SMOTE(bk ~., smote_train_dataset, perc.over = 10, perc.under = 1000, k=5)
+table(trainBank_SMOTE$bk)
+
+trainBank_SMOTE %>%
+  count(bk) %>%
+  mutate(percent = n/sum(n)*100)
+
 
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
@@ -88,15 +98,14 @@ library(naivebayes)
 library(psych)
 library(e1071)
 
-bank_nb_train <- trainBank
+bank_nb_train <- trainBank_SMOTE
 bank_nb_test <- testBank
 bank_nb_train$bk <- as.factor(bank_nb_train$bk)
 bank_nb_test$bk <- as.factor(bank_nb_test$bk)
 
-corrplot(cleanedBank)
-
-nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel = T, laplace=1)
+nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel=T)
 plot(nb_model)
+print(nb_model)
 
 nb_model_predict <- predict(nb_model, bank_nb_train, type = 'class')
 head(cbind(nb_model_predict, bank_nb_train))
@@ -106,74 +115,34 @@ nb_table
 
 nb_model_predict_test <- predict(nb_model, bank_nb_test)
 head(cbind(nb_model_predict_test, bank_nb_test))
-nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk)
+nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk, dnn=c("Prediction","Actual"))
+nb_table2
 1 - sum(diag(nb_table2)) / sum(nb_table2)
 
+NB_train <- table(nb_model_predict, bank_nb_train$bk)
+confusionMatrix(NB_train)
 
-########################### Neural Networks ####################################
+NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
+confusionMatrix(NB_test)
 
+library(ROCR)
 
+#TPR vs FPR Plot and AUC
+nb_model_predict_test <- list(nb_model_predict_test)
+bank_nb_test$bk <- list(bank_nb_test$bk)
 
-#wbank <- winsor(bank, trim = 0.005, na.rm = T)
-#wbank <- as.data.frame(wbank)
-#summary(wbank)
+nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
+perf_nb <- performance(nb_predict, "tpr", "fpr")
+plot(perf_nb, colorize = TRUE)
 
+auc.tmp <- performance(nn.predict, "auc")
+auc <- as.numeric(auc.tmp@y.values)
+auc
 
-#wbank %>%
-#count(bk) %>%
-#mutate(percent = n/sum(n)*100)
-#wbank <- drop_na(wbank)
-#corrplot(cor(wbank, use = "complete.obs"), method = "number")
-#includes missing data
-# test train split 70%
-#scaling data to [0,1] scale
-#max = apply(wbank, 2, max, na.rm = TRUE)
-#min = apply(wbank, 2, min, na.rm = TRUE)
-#scaled_bank = as.data.frame(scale(wbank, center = min, scale = max-min))
-#summary(scaled_bank)
+#optimal cut-off using Youden's index
+ROC <- plot.roc(test$bk, predict_nn$net.result)
+coords(ROC, "b", ret = "t", best.method="youden")
 
-
-bank <-drop_na(bank)
-library(neuralnet)
-#Noramizlie data to [-1,1] scale
-
-normalize <- function(x){
-  return(2*(x-max(x))/(max(x)-min(x))+1)
-}
-
-
-#summary(wbank)
-scaled_bank <- as.data.frame(apply(bank[,-13], 2, function(x) normalize(x)))
-scaled_bank <- cbind(scaled_bank, bk= bank$bk)
-summary(scaled_bank)
-
-
-sample <- sample.int(n=nrow(scaled_bank), size = floor(0.7*nrow(scaled_bank)), replace = F)
-train <- scaled_bank[sample,]
-test <- scaled_bank[-sample,]
-train$bk <- as.factor(train$bk)
-
-balanced_data <- SMOTE(bk ~., train, perc.over = 10, perc.under = 1000, k=5)
-balanced_data$bk <- as.numeric(as.character(balanced_data$bk))
-
-balanced_data %>%
-  count(bk) %>%
-  mutate(percent = n/sum(n)*100)
-
-summary(balanced_data)
-str(balanced_data)
-
-nn = neuralnet(bk ~ ., data = balanced_data, hidden = c(11,6,3), linear.output = FALSE, act.fct = "logistic")
-plot(nn)
-
-predict_nn <- compute(nn, test)
-predict_nn$net.result
-
-predict_nn_class <- ifelse(predict_nn$net.result>0.52586, 1, 0)
-predict_nn_class
-
-t <- table(predict_nn_class, test$bk)
-confusionMatrix(t)
 
 ########################### Logistic Regression ####################################
 
@@ -185,6 +154,20 @@ predict_glm
 
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
 confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
+
+
+########## KNN Model ##########
+
+trctrl <- trainControl(method = "cv", number = 10)
+
+knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
+                 trControl=trctrl,
+                 preProcess = c("center", "scale"), 
+                 tuneLength = 10)
+print(knn_fit)
+
+test_pred <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_pred, testBank$bk)
 
 
 ########################### Trees ####################################
@@ -226,3 +209,16 @@ tree_Bank <- rpart(formula = bk~., data=trainBank, method = "class", minbucket =
 rpart.plot(tree_Bank)
 plotcp(tree_Bank)
 printcp(tree_Bank)
+
+########## KNN Model ##########
+
+trctrl <- trainControl(method = "cv", number = 10)
+
+knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
+                 trControl=trctrl,
+                 preProcess = c("center", "scale"), 
+                 tuneLength = 10)
+print(knn_fit)
+
+test_pred <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_pred, testBank$bk)
