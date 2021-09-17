@@ -75,7 +75,7 @@ testBank<-arrange(testBank, Obs)
 
 # SMOTE
 
-# install.packages("devtools")
+#install.packages("devtools")
 require(devtools)
 # install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 library(DMwR)
@@ -180,35 +180,70 @@ cleanedBank <-drop_na(bank)
 colSums(is.na(cleanedBank))  
 str(cleanedBank)
 
-# Add an index just for programming purposes (will have to be ignored for data science)
-#Obs <- 1:81204
-#cleanedBank$Obs <-Obs
-
 #convert bk to factor
 cleanedBank$bk <- as.factor(cleanedBank$bk)
 str(cleanedBank)
-
-#one-hot encoding for all categorical variables
-#dummy <- dummyVars("~.", cleanedBank)
-#cleanedBank <- data.frame(predict(dummy, cleanedBank))
 
 # Set seed so it can be repeated
 set.seed(3141)
 
 # Randomly sample 70% percent of the cleaned data set then arrange in order
 trainBank <-sample_n(cleanedBank, floor(0.7*81204))
-#trainBank <-arrange(trainBank, Obs)
 str(trainBank)
 
 # The remaining data is used for the test set then arranged in order
 testBank<-anti_join(cleanedBank, trainBank)
-#testBank<-arrange(testBank, Obs)
 
-#Classification tree using all predictors
+####Classification tree using all predictors####
+#This method results in a lazy prediction due to the skewed data
+
 tree_Bank <- rpart(formula = bk~., data=trainBank, method = "class", minbucket = 50, maxdepth = 7)
 rpart.plot(tree_Bank)
 plotcp(tree_Bank)
 printcp(tree_Bank)
+
+#Prediction Accuracy - Classification Tree
+pred_tree_Bank <- predict(tree_Bank, newdata = testBank, type = "class")
+confusionMatrix(pred_tree_Bank, reference = as.factor(testBank$bk))
+
+
+####Random Forests####
+library(randomForest)
+
+rf_Bank <- randomForest(as.factor(bk)~., data = trainBank,
+                        ntree = 500,
+                        mtry = 3,
+                        importance = TRUE, proximity = TRUE)
+
+#Variable importance plot
+varImpPlot(rf_Bank, type = 1)
+
+#Prediction Accuracy - Random Forest
+pred_rf_Bank <- predict(tree_Bank, testBank)
+confusionMatrix(pred_tree_Bank, testBank$bk)
+
+#Tune mtry
+tune_rf <- tuneRF(trainBank[,-13], trainBank$bk,stepFactor = 0.25,
+       plot = TRUE, ntreeTry = 500, trace = TRUE, improve = 0.05)
+
+####Boosting####
+library(adabag)
+
+boost_Bank <- boosting(bk~., data = trainBank)
+
+#Prediction Accuracy - Boosting
+pred_boost_Bank <- predict(boost_Bank, testBank)
+confusionMatrix(pred_boost_Bank, testBank$bk)
+
+
+####Boosting 2####
+library(gbm)
+
+boost_Bank2 <- gbm(bk~., data=trainBank, distribution= "Bernuolli",
+                   n.trees = 5000, interaction.depth =4)
+
+
+pred_boost_Bank2 <- predict(boost_Bank2, testBank)
 
 ########## KNN Model ##########
 
