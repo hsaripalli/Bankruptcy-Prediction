@@ -73,11 +73,11 @@ testBank<-arrange(testBank, Obs)
 # md.pattern(trainBank)
 # md.pattern(testBank)
 
-# SMOTE
+# SMOTE (Synthetic Minority Oversampling Technique)
 
 #install.packages("devtools")
 require(devtools)
-# install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+#install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 library(DMwR)
 
 trainBank$bk <- as.factor(trainBank$bk)
@@ -176,28 +176,27 @@ library(rpart)
 library(rpart.plot)
 
 # This cleans the entire original data set (not split)
-cleanedBank <-drop_na(bank)
-colSums(is.na(cleanedBank))  
-str(cleanedBank)
+#cleanedBank <-drop_na(bank)
+#colSums(is.na(cleanedBank))  
+#str(cleanedBank)
 
 #convert bk to factor
-cleanedBank$bk <- as.factor(cleanedBank$bk)
-str(cleanedBank)
+#cleanedBank$bk <- as.factor(cleanedBank$bk)
+#str(cleanedBank)
 
 # Set seed so it can be repeated
 set.seed(3141)
 
 # Randomly sample 70% percent of the cleaned data set then arrange in order
-trainBank <-sample_n(cleanedBank, floor(0.7*81204))
+trainBank_SMOTE <-sample_n(cleanedBank, floor(0.7*81204))
 str(trainBank)
 
 # The remaining data is used for the test set then arranged in order
 testBank<-anti_join(cleanedBank, trainBank)
 
 ####Classification tree using all predictors####
-#This method results in a lazy prediction due to the skewed data
 
-tree_Bank <- rpart(formula = bk~., data=trainBank, method = "class", minbucket = 50, maxdepth = 7)
+tree_Bank <- rpart(formula = bk~., data=trainBank_SMOTE, method = "class", minbucket = 50, maxdepth = 7)
 rpart.plot(tree_Bank)
 plotcp(tree_Bank)
 printcp(tree_Bank)
@@ -210,21 +209,22 @@ confusionMatrix(pred_tree_Bank, reference = as.factor(testBank$bk))
 ####Random Forests####
 library(randomForest)
 
-rf_Bank <- randomForest(as.factor(bk)~., data = trainBank,
+rf_Bank <- randomForest(as.factor(bk)~., data = trainBank_SMOTE,
                         ntree = 500,
                         mtry = 3,
-                        importance = TRUE, proximity = TRUE)
+                        importance = TRUE)
 
 #Variable importance plot
 varImpPlot(rf_Bank, type = 1)
 
 #Prediction Accuracy - Random Forest
-pred_rf_Bank <- predict(tree_Bank, testBank)
-confusionMatrix(pred_tree_Bank, testBank$bk)
+pred_rf_Bank <- predict(rf_Bank, testBank)
+confusionMatrix(pred_rf_Bank, testBank$bk)
 
 #Tune mtry
-tune_rf <- tuneRF(trainBank[,-13], trainBank$bk,stepFactor = 0.25,
-       plot = TRUE, ntreeTry = 500, trace = TRUE, improve = 0.05)
+tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
+                  plot = TRUE, ntreeTry = 500, trace = TRUE, improve = 0.05)
+
 
 ####Boosting####
 library(adabag)
