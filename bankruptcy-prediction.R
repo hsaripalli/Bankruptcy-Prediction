@@ -90,6 +90,10 @@ trainBank_SMOTE %>%
   mutate(percent = n/sum(n)*100)
 
 
+
+###### !!!!!!!!!!!!!!!!!!! USE THIS FOR MODEL TRAINING: trainBank_SMOTE <------ #########
+
+
 ########################### Naive Bayes classification ####################################
 # Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
 # Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
@@ -126,20 +130,28 @@ NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
 confusionMatrix(NB_test)
 
 library(ROCR)
+library(pROC)
 
-#TPR vs FPR Plot and AUC
+####### USE THIS FOR PERFORMANCE EVALUATION ON BOTH TRAINING AND TESTING DATA ####
+####### NEED: CONFUSION MATRIX, AUC CURVE, AUC VALUE ##########
+
+# NB - TPR vs FPR Plot and AUC
 
 nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
 perf_nb <- performance(nb_predict, "tpr", "fpr")
 plot(perf_nb, colorize = TRUE)
 
-auc_nb <- performance(nb_model_predict_test, "auc")
-auc <- as.numeric(auc.tmp@y.values)
-auc
+auc_nb <- performance(nb_predict, "auc")
+auc_nb2 <- as.numeric(auc_nb@y.values)
+auc_nb2
 
 #optimal cut-off using Youden's index
-ROC <- plot.roc(test$bk, predict_nn$net.result)
-coords(ROC, "b", ret = "t", best.method="youden")
+nb_model_predict_test <- as.numeric(nb_model_predict_test)
+
+pROC::coords(r, "best")
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
+
+r<- pROC::roc(bank_nb_test$bk, nb_model_predict_test, plot=TRUE,print.auc = TRUE)
 
 
 ########################### Logistic Regression ####################################
