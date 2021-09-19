@@ -35,3 +35,21 @@ confusionMatrix(NB_test)
 
 library(ROCR)
 library(pROC)
+
+# NB - TPR vs FPR Plot and AUC
+
+nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
+perf_nb <- performance(nb_predict, "tpr", "fpr")
+plot(perf_nb, colorize = TRUE)
+
+auc_nb <- performance(nb_predict, "auc")
+auc_nb2 <- as.numeric(auc_nb@y.values)
+auc_nb2
+
+#optimal cut-off using Youden's index
+nb_model_predict_test <- as.numeric(nb_model_predict_test)
+
+pROC::coords(r, "best")
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
+
+r<- pROC::roc(bank_nb_test$bk, nb_model_predict_test, plot=TRUE,print.auc = TRUE)
