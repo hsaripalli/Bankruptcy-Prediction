@@ -20,34 +20,27 @@ library(e1071)
 # ***********
 
 
-
-
-
 svmModel <-svm(bk ~. -Obs, data = trainBank_SMOTE, kernel = "linear", cost = 1, scale = TRUE)
 print(svmModel)
 summary(svmModel)
 
 
 # Training
-
 svmPredictTrain<-predict(svmModel, trainBank_SMOTE)
 
+# Confusion matrix
 confusionMatrix(svmPredictTrain, as.factor(trainBank_SMOTE$bk))
+
+# ROC Curve
 pROC::roc(trainBank_SMOTE$bk, as.numeric(svmPredictTrain), plot=TRUE, print.auc = TRUE)
 
 # Testing
-
 svmPredictTest<-predict(svmModel, testBank)
+
+# Confusion matrix
 confusionMatrix(svmPredictTest, as.factor(testBank$bk))
 
+# ROC Curve
 pROC::roc(testBank$bk, as.numeric(svmPredictTest), plot=TRUE, print.auc = TRUE)
 
-#svmModel <-svm(Species ~., data = iris, kernel = "polynomial", cost = 1, scale = FALSE)
-#print(svmModel)
 
-
-# cor(testBank)
-# cor(dplyr::select(testBank, -Obs))
-# pairs(dplyr::select(testBank, -Obs))
-
-#testBank <- dplyr::select(testBank, -Obs)
