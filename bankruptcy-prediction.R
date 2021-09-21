@@ -62,11 +62,12 @@ set.seed(3141)
 # Randomly sample 70% percent of the cleaned data set then arrange in order
 trainBank <-sample_n(cleanedBank, floor(0.7*81204))
 trainBank <-arrange(trainBank, Obs)
+trainBank <- select(trainBank, -Obs)
 
 # The remaining data is used for the test set then arranged in order
 testBank<-anti_join(cleanedBank, trainBank)
 testBank<-arrange(testBank, Obs)
-
+testBank <- select(testBank, -Obs)
 
 # Checks for missing data 
 # md.pattern(cleanedBank)
@@ -118,14 +119,14 @@ r<- pROC::roc(bank_nb_test$bk, nb_model_predict_test, plot=TRUE,print.auc = TRUE
 
 ########################### Logistic Regression ####################################
 
-log <- glm(bk ~., data = balanced_data, family = binomial)
+log <- glm(bk ~., data = trainBank_SMOTE, family = binomial)
 summary(log)
 
-predict_glm <- predict(log, test, type = "response")
+predict_glm <- predict(log, testBank, type = "response")
 predict_glm
 
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
-confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
+confusionMatrix(predict_glm_class, reference = as.factor(testBank$bk))
 
 
 ########## KNN Model ##########
