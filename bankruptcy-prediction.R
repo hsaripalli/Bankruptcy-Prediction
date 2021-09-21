@@ -76,9 +76,9 @@ testBank <- select(testBank, -Obs)
 
 # SMOTE (Synthetic Minority Oversampling Technique)
 
-#install.packages("devtools")
+install.packages("devtools")
 require(devtools)
-#install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 library(DMwR)
 
 trainBank$bk <- as.factor(trainBank$bk)
@@ -139,9 +139,25 @@ knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
                  tuneLength = 10)
 print(knn_fit)
 
-test_pred <- predict(knn_fit, newdata = testBank)
-confusionMatrix(test_pred, testBank$bk)
+testBank$bk <- as.factor(testBank$bk)
 
+test_predknn <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_predknn, testBank$bk)
+
+knn_predict <- prediction(as.numeric(test_predknn), testBank$bk)
+perf_knn <- performance(knn_predict, "tpr", "fpr")
+plot(perf_knn, colorize = TRUE)
+
+auc_knn <- performance(knn_predict, "auc")
+auc_knn2 <- as.numeric(auc_knn@y.values)
+auc_knn2
+
+#optimal cut-off using Youden's index
+test_predknn <- as.numeric(test_predknn)
+
+r<- pROC::roc(testBank$bk, test_predknn, plot=TRUE,print.auc = TRUE)
+
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
 
 ########################### Trees ####################################
 library(Rcpp)
@@ -158,18 +174,19 @@ library(rpart.plot)
 #str(cleanedBank)
 
 # Set seed so it can be repeated
-set.seed(3141)
+# set.seed(3141)
 
 # Randomly sample 70% percent of the cleaned data set then arrange in order
-trainBank_SMOTE <-sample_n(cleanedBank, floor(0.7*81204))
-str(trainBank)
+# trainBank_SMOTE <-sample_n(cleanedBank, floor(0.7*81204))
+# str(trainBank)
 
 # The remaining data is used for the test set then arranged in order
-testBank<-anti_join(cleanedBank, trainBank)
+# testBank<-anti_join(cleanedBank, trainBank)
 
 ####Classification tree using all predictors####
 
-tree_Bank <- rpart(formula = bk~., data=trainBank_SMOTE, method = "class", minbucket = 50, maxdepth = 7)
+tree_Bank <- rpart(formula = bk~., data=trainBank_SMOTE, method = "class", 
+                   minbucket = 50, maxdepth = 7)
 rpart.plot(tree_Bank)
 plotcp(tree_Bank)
 printcp(tree_Bank)
@@ -212,21 +229,9 @@ confusionMatrix(pred_boost_Bank, testBank$bk)
 ####Boosting 2####
 library(gbm)
 
-boost_Bank2 <- gbm(bk~., data=trainBank, distribution= "Bernuolli",
+?gbm
+boost_Bank2 <- gbm(bk~., data=trainBank, distribution= "bernoulli",
                    n.trees = 5000, interaction.depth =4)
 
 
 pred_boost_Bank2 <- predict(boost_Bank2, testBank)
-
-########## KNN Model ##########
-
-trctrl <- trainControl(method = "cv", number = 10)
-
-knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
-                 trControl=trctrl,
-                 preProcess = c("center", "scale"), 
-                 tuneLength = 10)
-print(knn_fit)
-
-test_pred <- predict(knn_fit, newdata = testBank)
-confusionMatrix(test_pred, testBank$bk)
