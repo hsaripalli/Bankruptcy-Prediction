@@ -76,9 +76,9 @@ testBank <- select(testBank, -Obs)
 
 # SMOTE (Synthetic Minority Oversampling Technique)
 
-install.packages("devtools")
+# install.packages("devtools")
 require(devtools)
-install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+# install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 library(DMwR)
 
 trainBank$bk <- as.factor(trainBank$bk)
