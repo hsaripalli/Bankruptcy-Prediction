@@ -18,6 +18,12 @@ library(pROC)
 library(ROCR)
 
 
+
+
+
+trainBank_SMOTE <-dplyr::select(trainBank_SMOTE, -Obs)
+testBank <-dplyr::select(testBank, -Obs)
+
 #********
 # Going with the original test / train set
 #********
@@ -66,10 +72,31 @@ library(ggord)
 #library(klaR)
 #partimat(bk ~.,data = trainBank_SMOTE, method="lda", main = "Partition Plots")
 
+
+# pty sets the aspect ratio of the plot region. Two options:
+# s" - creates a square plotting region
+# "m" - (the default) creates a maximal plotting region
+# This will be switched back to "m'" when finished
+par(pty = "s")
+
+
+
+
 actualValuesLDA <-testBank$bk
 predictedValuesLDA <- as.numeric(ldaP2)
 
 pROC::roc(actualValuesLDA, predictedValuesLDA, plot=TRUE, print.auc = TRUE)
+
+
+# NB - TPR vs FPR Plot and AUC
+
+nb_predict <- prediction(as.numeric(predictedValuesLDA), actualValuesLDA)
+perf_nb <- performance(nb_predict, "tpr", "fpr")
+plot(perf_nb, colorize = TRUE)
+
+auc_nb <- performance(nb_predict, "auc")
+auc_nb2 <- as.numeric(auc_nb@y.values)
+auc_nb2
 
 
 
@@ -111,3 +138,9 @@ predictedValuesQDA <- as.numeric(qdaP1)
 
 pROC::roc(actualValuesQDA, predictedValuesQDA, plot=TRUE, print.auc = TRUE)
 
+
+# pty sets the aspect ratio of the plot region. Two options:
+# s" - creates a square plotting region
+# "m" - (the default) creates a maximal plotting region
+# This will be switched back to "m'" when finished
+par(pty = "m")
