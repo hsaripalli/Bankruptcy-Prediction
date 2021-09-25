@@ -215,11 +215,11 @@ rf_Bank <- randomForest(as.factor(bk)~., data = trainBank_SMOTE,
                         importance = TRUE)
 
 #Variable importance plot
-varImpPlot(rf_Bank, type = 1)
-
+varImpPlot(rf_Bank, type = 1, main= "Variable Importance Plot")
+?varImpPlot()
 #Prediction Accuracy - Random Forest
 pred_rf_Bank <- predict(rf_Bank, testBank)
-confusionMatrix(pred_rf_Bank, testBank$bk)
+confusionMatrix(pred_rf_Bank, reference = as.factor(testBank$bk))
 
 #Tune mtry
 tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
