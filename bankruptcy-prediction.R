@@ -62,11 +62,12 @@ set.seed(3141)
 # Randomly sample 70% percent of the cleaned data set then arrange in order
 trainBank <-sample_n(cleanedBank, floor(0.7*81204))
 trainBank <-arrange(trainBank, Obs)
+trainBank <- select(trainBank, -Obs)
 
 # The remaining data is used for the test set then arranged in order
 testBank<-anti_join(cleanedBank, trainBank)
 testBank<-arrange(testBank, Obs)
-
+testBank <- select(testBank, -Obs)
 
 # Checks for missing data 
 # md.pattern(cleanedBank)
@@ -75,9 +76,9 @@ testBank<-arrange(testBank, Obs)
 
 # SMOTE (Synthetic Minority Oversampling Technique)
 
-#install.packages("devtools")
+# install.packages("devtools")
 require(devtools)
-#install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
+# install_version("DMwR", version = "0.4.1", repos = "http://cran.us.r-project.org")
 library(DMwR)
 
 trainBank$bk <- as.factor(trainBank$bk)
@@ -89,71 +90,43 @@ trainBank_SMOTE %>%
   count(bk) %>%
   mutate(percent = n/sum(n)*100)
 
-
-########################### Naive Bayes classification ####################################
-# Used this source as reference: https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/
-# Another source: https://www.learnbymarketing.com/tutorials/naive-bayes-in-r/ 
-
-library(naivebayes)
-library(psych)
-library(e1071)
-
-bank_nb_train <- trainBank_SMOTE
-bank_nb_test <- testBank
-bank_nb_train$bk <- as.factor(bank_nb_train$bk)
-bank_nb_test$bk <- as.factor(bank_nb_test$bk)
-
-nb_model <- naive_bayes(bk ~ ., data = bank_nb_train, usekernel=T)
-plot(nb_model)
-print(nb_model)
-
-nb_model_predict <- predict(nb_model, bank_nb_train, type = 'class')
-head(cbind(nb_model_predict, bank_nb_train))
-nb_table <- table(nb_model_predict, bank_nb_train$bk, dnn=c("Prediction","Actual"))
-nb_table
-1 - sum(diag(nb_table))/sum(nb_table)
-
-nb_model_predict_test <- predict(nb_model, bank_nb_test)
-head(cbind(nb_model_predict_test, bank_nb_test))
-nb_table2 <- table(nb_model_predict_test, bank_nb_test$bk, dnn=c("Prediction","Actual"))
-nb_table2
-1 - sum(diag(nb_table2)) / sum(nb_table2)
-
-NB_train <- table(nb_model_predict, bank_nb_train$bk)
-confusionMatrix(NB_train)
-
-NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
-confusionMatrix(NB_test)
+###### !!!!!!!!!!!!!!!!!!! USE THIS FOR MODEL TRAINING: trainBank_SMOTE <------ #########
 
 library(ROCR)
+library(pROC)
 
-#TPR vs FPR Plot and AUC
-nb_model_predict_test <- list(nb_model_predict_test)
-bank_nb_test$bk <- list(bank_nb_test$bk)
+####### USE THIS FOR PERFORMANCE EVALUATION ON BOTH TRAINING AND TESTING DATA ####
+####### NEED: CONFUSION MATRIX, AUC CURVE, AUC VALUE ##########
+
+# NB - TPR vs FPR Plot and AUC
 
 nb_predict <- prediction(nb_model_predict_test, bank_nb_test$bk)
 perf_nb <- performance(nb_predict, "tpr", "fpr")
 plot(perf_nb, colorize = TRUE)
 
-auc.tmp <- performance(nn.predict, "auc")
-auc <- as.numeric(auc.tmp@y.values)
-auc
+auc_nb <- performance(nb_predict, "auc")
+auc_nb2 <- as.numeric(auc_nb@y.values)
+auc_nb2
 
 #optimal cut-off using Youden's index
-ROC <- plot.roc(test$bk, predict_nn$net.result)
-coords(ROC, "b", ret = "t", best.method="youden")
+nb_model_predict_test <- as.numeric(nb_model_predict_test)
+
+pROC::coords(r, "best")
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
+
+r<- pROC::roc(bank_nb_test$bk, nb_model_predict_test, plot=TRUE,print.auc = TRUE)
 
 
 ########################### Logistic Regression ####################################
 
-log <- glm(bk ~., data = balanced_data, family = binomial)
+log <- glm(bk ~., data = trainBank_SMOTE, family = binomial)
 summary(log)
 
-predict_glm <- predict(log, test, type = "response")
+predict_glm <- predict(log, testBank, type = "response")
 predict_glm
 
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
-confusionMatrix(predict_glm_class, reference = as.factor(test$bk))
+confusionMatrix(predict_glm_class, reference = as.factor(testBank$bk))
 
 
 ########## KNN Model ##########
@@ -166,6 +139,7 @@ knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
                  tuneLength = 10)
 print(knn_fit)
 
+<<<<<<< HEAD
 test_pred <- predict(knn_fit, newdata = testBank)
 confusionMatrix(test_pred, testBank$bk)
 
@@ -245,14 +219,25 @@ tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
 
 
 ########## KNN Model ##########
+=======
+testBank$bk <- as.factor(testBank$bk)
 
-trctrl <- trainControl(method = "cv", number = 10)
+test_predknn <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_predknn, testBank$bk)
 
-knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
-                 trControl=trctrl,
-                 preProcess = c("center", "scale"), 
-                 tuneLength = 10)
-print(knn_fit)
+knn_predict <- prediction(as.numeric(test_predknn), testBank$bk)
+perf_knn <- performance(knn_predict, "tpr", "fpr")
+plot(perf_knn, colorize = TRUE)
 
-test_pred <- predict(knn_fit, newdata = testBank)
-confusionMatrix(test_pred, testBank$bk)
+auc_knn <- performance(knn_predict, "auc")
+auc_knn2 <- as.numeric(auc_knn@y.values)
+auc_knn2
+
+#optimal cut-off using Youden's index
+test_predknn <- as.numeric(test_predknn)
+>>>>>>> 6e302a57460b6fdc6688cc79c773a4ef132c9ebf
+
+r<- pROC::roc(testBank$bk, test_predknn, plot=TRUE,print.auc = TRUE)
+
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
+
