@@ -205,6 +205,24 @@ printcp(tree_Bank)
 pred_tree_Bank <- predict(tree_Bank, newdata = testBank, type = "class")
 confusionMatrix(pred_tree_Bank, reference = as.factor(testBank$bk))
 
+library(ROCR)
+
+#TPR vs FPR Plot and AUC
+pred_tree_Bank <- list(pred_tree_Bank)
+testBank$bk <- list(testBank$bk)
+
+tree_predict <- prediction(pred_tree_Bank, testBank$bk)
+perf_tree <- performance(tree_predict, "tpr", "fpr")
+plot(perf_tree, colorize = TRUE)
+
+auc.tmp <- performance(nn_predict, "auc")
+auc <- as.numeric(auc.tmp@y.values)
+auc
+
+#optimal cut-off using Youden's index
+ROC <- plot.roc(testBank$bk, predict_nn$net.result)
+coords(ROC, "b", ret = "t", best.method="youden")
+
 
 ####Random Forests####
 library(randomForest)
@@ -216,7 +234,7 @@ rf_Bank <- randomForest(as.factor(bk)~., data = trainBank_SMOTE,
 
 #Variable importance plot
 varImpPlot(rf_Bank, type = 1, main= "Variable Importance Plot")
-?varImpPlot()
+
 #Prediction Accuracy - Random Forest
 pred_rf_Bank <- predict(rf_Bank, testBank)
 confusionMatrix(pred_rf_Bank, reference = as.factor(testBank$bk))
