@@ -244,25 +244,6 @@ tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
                   plot = TRUE, ntreeTry = 500, trace = TRUE, improve = 0.05)
 
 
-####Boosting####
-library(adabag)
-
-boost_Bank <- boosting(bk~., data = trainBank)
-
-#Prediction Accuracy - Boosting
-pred_boost_Bank <- predict(boost_Bank, testBank)
-confusionMatrix(pred_boost_Bank, testBank$bk)
-
-
-####Boosting 2####
-library(gbm)
-
-boost_Bank2 <- gbm(bk~., data=trainBank, distribution= "Bernuolli",
-                   n.trees = 5000, interaction.depth =4)
-
-
-pred_boost_Bank2 <- predict(boost_Bank2, testBank)
-
 ########## KNN Model ##########
 
 trctrl <- trainControl(method = "cv", number = 10)
