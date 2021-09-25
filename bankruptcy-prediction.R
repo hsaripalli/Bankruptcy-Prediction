@@ -139,7 +139,7 @@ knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
                  tuneLength = 10)
 print(knn_fit)
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
 test_pred <- predict(knn_fit, newdata = testBank)
 confusionMatrix(test_pred, testBank$bk)
 
@@ -219,7 +219,7 @@ tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
 
 
 ########## KNN Model ##########
-=======
+#=======
 testBank$bk <- as.factor(testBank$bk)
 
 test_predknn <- predict(knn_fit, newdata = testBank)
@@ -235,7 +235,7 @@ auc_knn2
 
 #optimal cut-off using Youden's index
 test_predknn <- as.numeric(test_predknn)
->>>>>>> 6e302a57460b6fdc6688cc79c773a4ef132c9ebf
+#>>>>>>> 6e302a57460b6fdc6688cc79c773a4ef132c9ebf
 
 r<- pROC::roc(testBank$bk, test_predknn, plot=TRUE,print.auc = TRUE)
 
