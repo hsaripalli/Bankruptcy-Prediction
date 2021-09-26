@@ -182,20 +182,21 @@ confusionMatrix(pred_tree_Bank, reference = as.factor(testBank$bk))
 library(ROCR)
 
 #TPR vs FPR Plot and AUC
-pred_tree_Bank <- list(pred_tree_Bank)
-testBank$bk <- list(testBank$bk)
 
-tree_predict <- prediction(pred_tree_Bank, testBank$bk)
+tree_predict <- prediction(as.numeric(pred_tree_Bank), testBank$bk)
 perf_tree <- performance(tree_predict, "tpr", "fpr")
 plot(perf_tree, colorize = TRUE)
 
-auc.tmp <- performance(nn_predict, "auc")
+auc.tmp <- performance(tree_predict, "auc")
 auc <- as.numeric(auc.tmp@y.values)
 auc
 
 #optimal cut-off using Youden's index
-ROC <- plot.roc(testBank$bk, predict_nn$net.result)
-coords(ROC, "b", ret = "t", best.method="youden")
+pred_tree_Bank <- as.numeric(pred_tree_Bank)
+
+r<- pROC::roc(testBank$bk, pred_tree_Bank, plot=TRUE,print.auc = TRUE)
+
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
 
 
 ####Random Forests####
@@ -216,6 +217,23 @@ confusionMatrix(pred_rf_Bank, reference = as.factor(testBank$bk))
 #Tune mtry
 tune_rf <- tuneRF(trainBank_SMOTE[,-13], trainBank_SMOTE$bk,stepFactor = 0.5,
                   plot = TRUE, ntreeTry = 500, trace = TRUE, improve = 0.05)
+
+#TPR vs FPR Plot and AUC
+
+rf_predict <- prediction(as.numeric(pred_rf_Bank), testBank$bk)
+perf_rf <- performance(rf_predict, "tpr", "fpr")
+plot(perf_rf, colorize = TRUE)
+
+auc.tmp <- performance(rf_predict, "auc")
+auc <- as.numeric(auc.tmp@y.values)
+auc
+
+#optimal cut-off using Youden's index
+pred_rf_Bank <- as.numeric(pred_rf_Bank)
+
+r<- pROC::roc(testBank$bk, pred_rf_Bank, plot=TRUE,print.auc = TRUE)
+
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
 
 
 ########## KNN Model ##########
