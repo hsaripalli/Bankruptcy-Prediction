@@ -23,6 +23,9 @@ library(naivebayes)
 library(psych)
 library(e1071)
 library(MASS)
+library(devtools)
+library(ggord)
+library(neuralnet)
 
 theme_set(theme_bw())
 options(scipen = 999)
@@ -43,7 +46,6 @@ summary(bank)
 head(bank)
 
 ####Exploratory Plots####
-source(file.choose())
 
 #correlation plot
 corrplot(cor(bank, use = "complete.obs"), method = "number")
@@ -151,12 +153,12 @@ set.seed(3141)
 # Randomly sample 70% percent of the cleaned data set then arrange in order
 trainBank <-sample_n(cleanedBank, floor(0.7*81204))
 trainBank <-arrange(trainBank, Obs)
-trainBank <- select(trainBank, -Obs)
+trainBank <- dplyr::select(trainBank, -Obs)
 
 # The remaining data is used for the test set then arranged in order
 testBank<-anti_join(cleanedBank, trainBank)
 testBank<-arrange(testBank, Obs)
-testBank <- select(testBank, -Obs)
+testBank <- dplyr::select(testBank, -Obs)
 
 # SMOTE (Synthetic Minority Oversampling Technique)
 
@@ -255,33 +257,53 @@ par(pty = "m")
 
 ########################### Logistic Regression ###########################
 
-log <- glm(bk ~., data = trainBank_SMOTE, family = binomial)
-summary(log)
+logit <- glm(bk~eps+liquidity+profitability+productivity+leverage_ratio+asset_turnover+operational_margin
+             +return_on_equity+market_book_ratio+assets_growth+sales_growth+employee_growth,
+             data = trainBank_SMOTE,family = "binomial")
+summary(logit)
 
-predict_glm <- predict(log, testBank, type = "response")
+predict_glm <- predict(logit,testBank,type="response")
 predict_glm
-
 predict_glm_class <- as.factor(ifelse(predict_glm > 0.5, 1,0))
+predict_glm_class
+table(predict_glm_class,testBank$bk)
 confusionMatrix(predict_glm_class, reference = as.factor(testBank$bk))
 
+logit_predict <- prediction(as.numeric(predict_glm),testBank$bk)
+perf_logit <- performance(logit_predict,"tpr","fpr")
+plot(perf_logit,colorize=TRUE)
+
+auc_logit <- performance(logit_predict,"auc")
+auc_logistics <- as.numeric(auc_logit@y.values)
+auc_logistics
+
+test_logistics <- as.numeric(predict_glm)
+r <- pROC::roc(testBank$bk,test_logistics,plot=TRUE,print.auc=TRUE)
+pROC::coords(r,"best")
+pROC::coords(r,x="best",input="threshold",best.method="youden")
 
 ########################### KNN Model ###########################
 
-trctrl <- trainControl(method = "cv", number = 10)
+testBank$bk <- as.factor(testBank$bk)
 
-knn_fit <- train(bk ~., data = trainBank_SMOTE, method = "knn",
-                 trControl=trctrl,
-                 preProcess = c("center", "scale"), 
-                 tuneLength = 10)
-print(knn_fit)
+test_predknn <- predict(knn_fit, newdata = testBank)
+confusionMatrix(test_predknn, testBank$bk)
 
-#<<<<<<< HEAD
-test_pred <- predict(knn_fit, newdata = testBank)
-confusionMatrix(test_pred, testBank$bk)
+knn_predict <- prediction(as.numeric(test_predknn), testBank$bk)
+perf_knn <- performance(knn_predict, "tpr", "fpr")
+plot(perf_knn, colorize = TRUE)
+
+auc_knn <- performance(knn_predict, "auc")
+auc_knn2 <- as.numeric(auc_knn@y.values)
+auc_knn2
+
+#optimal cut-off using Youden's index
+test_predknn <- as.numeric(test_predknn)
+r<- pROC::roc(testBank$bk, test_predknn, plot=TRUE,print.auc = TRUE)
+
+pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
 
 ########################### Discriminant Analysis ########################### 
-
-source(file.choose())
 
 ldaModel1 <-lda(bk ~., trainBank_SMOTE)
 ldaModel1
@@ -312,13 +334,7 @@ confusionMatrix(ldaP2, as.factor(testBank$bk))
 accuracy2 <- sum(diag(ldaTable2)/sum(ldaTable2))
 accuracy2
 
-#install.packages("devtools")
-library(devtools)
-#install_github("fawda123/ggord")
-library(ggord)
-
 # Partition Plots
-#install.packages("klaR")
 
 #library(klaR)
 #partimat(bk ~.,data = trainBank_SMOTE, method="lda", main = "Partition Plots")
@@ -334,15 +350,15 @@ predictedValuesLDA <- as.numeric(ldaP2)
 
 pROC::roc(actualValuesLDA, predictedValuesLDA, plot=TRUE, print.auc = TRUE)
 
-# NB - TPR vs FPR Plot and AUC
+# TPR vs FPR Plot and AUC
 
-nb_predict <- prediction(as.numeric(predictedValuesLDA), actualValuesLDA)
-perf_nb <- performance(nb_predict, "tpr", "fpr")
-plot(perf_nb, colorize = TRUE)
+lda_predict <- prediction(as.numeric(predictedValuesLDA), actualValuesLDA)
+perf_lda <- performance(lda_predict, "tpr", "fpr")
+plot(perf_lda, colorize = TRUE)
 
-auc_nb <- performance(nb_predict, "auc")
-auc_nb2 <- as.numeric(auc_nb@y.values)
-auc_nb2
+auc_lda <- performance(lda_predict, "auc")
+auc_lda2 <- as.numeric(auc_lda@y.values)
+auc_lda2
 
 # pred <- ROCR::prediction(ldaModel1$prior[,2], trainBank$bk)
 # perf <- ROCR::performance(pred,"tpr","fpr")
@@ -414,17 +430,17 @@ par(pty = "s")
 # ROC Curve
 pROC::roc(testBank$bk, as.numeric(svmPredictTest), plot=TRUE, print.auc = TRUE)
 
-# NB - TPR vs FPR Plot and AUC
+# SVM - TPR vs FPR Plot and AUC
 
-nb_predict <- prediction(as.numeric(svmPredictTest), testBank$bk)
-perf_nb <- performance(nb_predict, "tpr", "fpr")
-plot(perf_nb, colorize = TRUE)
+svm_predict <- prediction(as.numeric(svmPredictTest), testBank$bk)
+perf_svm <- performance(svm_predict, "tpr", "fpr")
+plot(perf_svm, colorize = TRUE)
 
-auc_nb <- performance(nb_predict, "auc")
-auc_nb2 <- as.numeric(auc_nb@y.values)
-auc_nb2
+auc_svm <- performance(svm_predict, "auc")
+auc_svm2 <- as.numeric(auc_svm@y.values)
+auc_svm2
 
-# Support Vector Machines Model
+# Support Vector Machines Model 2
 svmModel1 <-svm(bk ~., data = trainBank_SMOTE, kernel = "polynomial", cost = 1, scale = TRUE)
 print(svmModel1)
 summary(svmModel1)
@@ -589,9 +605,6 @@ confusionMatrix(NB_train)
 NB_test <- table(nb_model_predict_test, bank_nb_test$bk)
 confusionMatrix(NB_test)
 
-library(ROCR)
-library(pROC)
-
 # NB - TPR vs FPR Plot and AUC
 
 nb_predict <- prediction(as.numeric(nb_model_predict_test), bank_nb_test$bk)
@@ -611,23 +624,33 @@ pROC::coords(r, x = "best", input = "threshold", best.method = "youden")
 
 ########################### Neural Network ###########################
 
+options(scipen = 999)
+
+#import data
+bank <- read_excel(file.choose())
+
+colnames(bank) <- c("eps", "liquidity", "profitability", "productivity",
+                    "leverage_ratio", "asset_turnover", "operational_margin",
+                    "return_on_equity", "market_book_ratio", "assets_growth",
+                    "sales_growth", "employee_growth", "bk")
+
+bank <-drop_na(bank)
+
 #winsorize 0.5 percentile and 0.95 percentile data
 
 wbank <- winsor(bank, trim = 0.005, na.rm = T)
 wbank <- as.data.frame(wbank)
 summary(wbank)
 
-#Noramizlie data to [-1,1] scale
+#Normalize data to [-1,1] scale
 
 normalize <- function(x){
   return(2*(x-max(x))/(max(x)-min(x))+1)
 }
 
-
 scaled_bank <- as.data.frame(apply(wbank[,-13], 2, function(x) normalize(x)))
 scaled_bank <- cbind(scaled_bank, bk= bank$bk)
 summary(scaled_bank)
-
 
 sample <- sample.int(n=nrow(scaled_bank), size = floor(0.7*nrow(scaled_bank)), replace = F)
 train <- scaled_bank[sample,]
@@ -651,7 +674,6 @@ nn = neuralnet(bk ~ ., data = balanced_data,
                stepmax = 1000000,
 )
 plot(nn)
-
 
 predict_nn <- compute(nn, test)
 predict_nn$net.result
