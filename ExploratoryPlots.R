@@ -103,3 +103,4 @@ for (i in 1:12){
     geom_histogram()
   plot_i
 }
+

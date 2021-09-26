@@ -47,6 +47,9 @@ rf_Bank <- randomForest(as.factor(bk)~., data = trainBank_SMOTE,
 varImpPlot(rf_Bank, type = 1)
 
 #Prediction Accuracy - Random Forest
+
+testBank$bk <- as.factor(testBank$bk)
+
 pred_rf_Bank <- predict(rf_Bank, testBank)
 confusionMatrix(pred_rf_Bank, testBank$bk)
 
